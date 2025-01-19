@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+
+  <div class="container mt-4">
+    <!-- Header Section -->
+    <div class="alert alert-light d-flex justify-content-between align-items-center" role="alert">
+        <h5 class="mb-0">Available Public Rooms</h5>
+        <a href="/accounts/logout/">
+          <button type="button" class="btn btn-outline-dark logout-btn">Log Out</button>
+        </a>
+    </div>
+    
+    <!-- Room Cards Section -->
+    {% if rooms %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for room in rooms %}
+        <div class="col">
+            <div class="card room-card">
+                <div class="card-body">
+                    <h3 class="card-title">{{ room.name }}</h3>
+                    <p class="card-text">A public group for this project.</p>
+                    <a href="/{{ room.slug }}" class="btn btn-primary w-100">Go to Room</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-warning text-center">No Rooms Available!</div>
+    {% endif %}
+  </div>
+
+{% else %}
+<div class="container mt-4">
+    <div class="alert alert-light d-flex justify-content-between align-items-center" role="alert">
+        <h5 class="mb-0">You are not logged in</h5>
+        <a href="/accounts/logout/">
+          <button type="button" class="btn btn-outline-dark">
+            <a href="{% url 'login' %}" class="text-decoration-none text-dark">Log In</a>
+          </button>
+        </a>
+    </div>
+</div>  
+{% endif %}
+
+{% block extra_styles %}
+<style>
+  /* Global Styles */
+  body {
+    background-color: #f9f9f9;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .container {
+    margin-top: 40px;
+  }
+
+  /* Header and Button */
+  .alert {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 15px 25px;
+  }
+
+  .logout-btn {
+    border: 1px solid #dcdcdc;
+    color: #555555;
+    background-color: #ffffff;
+    font-weight: 600;
+  }
+
+  .logout-btn:hover {
+    background-color: #f1f1f1;
+  }
+
+  /* Room Cards */
+  .room-card {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .room-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .card-body {
+    padding: 20px;
+  }
+
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+  }
+
+  .card-text {
+    font-size: 1rem;
+    margin-bottom: 20px;
+  }
+
+  .btn-primary {
+    background-color: #4CAF50;
+    border-color: #4CAF50;
+    font-size: 16px;
+    padding: 12px;
+    border-radius: 25px;
+  }
+
+  .btn-primary:hover {
+    background-color: #45a049;
+    border-color: #45a049;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .card-body {
+      padding: 15px;
+    }
+  }
+
+  .alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+    color: #856404;
+  }
+</style>
+{% endblock %}
+
+{% endblock %}

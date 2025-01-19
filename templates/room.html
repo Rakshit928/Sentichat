@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+<div class="container">
+  <div class="row d-flex justify-content-center">
+    <div class="col-12">
+      <div class="alert alert-light d-flex justify-content-between align-items-center" role="alert">
+        <h5>ROOM: {{ room_name }}</h5>
+        <a href="/accounts/logout/">
+          <button type="button" class="btn btn-outline-dark logout-btn">Log Out</button>
+        </a>
+      </div>
+      <form id="message-form" enctype="multipart/form-data">
+        <div class="form-group chat-box-container">
+          {% if messages %}
+          <div class="chatbox" id="chatbox">
+            {% for message in messages %}
+            <div class="chat-message {% if message.user == request.user %}text-right my-message{% else %}text-left other-message{% endif %}">
+              <b>{{ message.user.username }}</b>:
+              {% if message.file %}
+              <a href="{{ message.file.url }}" download>{{ message.file.name }}</a>
+              {% else %}
+              {{ message.content }}
+              {% if message.sentiment %}
+              <small class="text-muted sentiment">(Sentiment: {{ message.sentiment }})</small>
+              {% endif %}
+              {% endif %}
+              <br>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="chatbox">
+            <b>No Messages in this Room.</b>
+          </div>
+          {% endif %}
+        </div>
+        <br />
+        <div class="form-group">
+          <input class="form-control message-input" placeholder="Enter text here" id="my_input" name="content" type="text" />
+        </div>
+        <br />
+        <div class="form-group">
+          <input class="form-control-file" type="file" id="file_input" name="file" />
+        </div>
+        <br />
+        <button type="submit" class="btn btn-primary btn-lg btn-block send-btn" id="submit_button">Send</button>
+      </form>
+    </div>
+  </div>
+</div>
+{{ slug|json_script:"room_slug" }}
+<script>
+  const chatbox = document.querySelector("#chatbox");
+
+  function scrollToBottom() {
+    chatbox.scrollTop = chatbox.scrollHeight;
+  }
+
+  scrollToBottom();
+
+  const roomName = JSON.parse(document.getElementById('room_slug').textContent);
+  const chatSocket = new WebSocket("ws://" + window.location.host + "/ws/" + roomName + "/");
+
+  chatSocket.onopen = function () {
+    console.log("The connection was set up successfully!");
+  };
+
+  chatSocket.onclose = function () {
+    console.log("Something unexpected happened!");
+  };
+
+  document.querySelector("#message-form").onsubmit = async function (e) {
+    e.preventDefault();
+    const content = document.querySelector("#my_input").value;
+    const fileInput = document.querySelector("#file_input").files[0];
+
+    if (!content && !fileInput) {
+      alert("Please enter a message or select a file to send!");
+      return;
+    }
+
+    const data = {
+      username: "{{ request.user.username }}",
+      room_name: "{{ room_name }}"
+    };
+
+    if (content) {
+      data.message = content;
+    }
+
+    if (fileInput) {
+      const reader = new FileReader();
+      reader.onload = function () {
+        const base64File = reader.result.split(",")[1];
+        data.file = base64File;
+        data.file_name = fileInput.name;
+
+        chatSocket.send(JSON.stringify(data));
+      };
+      reader.readAsDataURL(fileInput);
+    } else {
+      chatSocket.send(JSON.stringify(data));
+    }
+
+    document.querySelector("#my_input").value = "";
+    document.querySelector("#file_input").value = "";
+  };
+
+  chatSocket.onmessage = function (e) {
+    const data = JSON.parse(e.data);
+    const div = document.createElement("div");
+
+    if (data.file_name && data.file_url) {
+      div.innerHTML = "<b>" + data.username + "</b> : <a href='" + data.file_url + "' target='_blank' download>" + data.file_name + "</a>";
+    } else {
+      div.innerHTML = "<b>" + data.username + "</b> : " + data.message +
+        (data.sentiment ? ' <small class="text-muted sentiment">(Sentiment: ' + data.sentiment + ')</small>' : '');
+    }
+
+    if (data.username === "{{ request.user.username }}") {
+      div.classList.add("chat-message", "text-right", "my-message");
+    } else {
+      div.classList.add("chat-message", "text-left", "other-message");
+    }
+
+    document.querySelector("#chatbox").appendChild(div);
+    scrollToBottom();
+  };
+</script>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+  }
+
+  .container {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 50px;
+  }
+
+  .alert {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+  }
+
+  .chat-box-container {
+    height: 400px;
+    overflow-y: auto;
+    background-color: #f7f7f9;
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid #ddd;
+  }
+
+  .chatbox {
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .chat-message {
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 15px;
+    display: inline-block;
+  }
+
+  .my-message {
+    background-color: #d1e7dd;
+    color: #0f5132;
+    align-self: flex-end;
+  }
+
+  .other-message {
+    background-color:rgb(236, 186, 190);
+    color: #842029;
+    align-self: flex-start;
+  }
+
+  .message-input {
+    border-radius: 8px;
+    padding: 10px;
+    border: 1px solid #ddd;
+  }
+
+  .send-btn {
+    background-color: #007bff;
+    color: white;
+    border-radius: 8px;
+  }
+
+  .send-btn:hover {
+    background-color: #0056b3;
+  }
+</style>
+{% else %}
+<div class="container">
+  <div class="alert alert-light d-flex justify-content-between" role="alert">
+    <h5>You are not logged in</h5>
+    <a href="/accounts/logout/">
+      <button type="button" class="btn btn-outline-dark">
+        <a href="{% url 'login' %}">Log In</a>
+      </button>
+    </a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
