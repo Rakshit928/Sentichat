@@ -24,10 +24,5 @@ This project is a **Real-Time Chat Application** built using **Django** and **We
    - Users can upload and download files directly within the chat.
    - Files are stored in the server and linked to individual chat conversations.
 
-## Snapshots
-
-### Snapshot 1:
-![Snapshot 1](SnapShot.png)
-
-### Snapshot 2:
-![Snapshot 2](SnapShot1.png)
+### Snapshot:
+![Snapshot](SnapShot1.png)
